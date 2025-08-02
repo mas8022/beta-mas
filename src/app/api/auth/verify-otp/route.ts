@@ -20,11 +20,8 @@ export async function POST(req: NextRequest) {
     if (!savedCode) {
       return NextResponse.json(
         { message: "کد تأیید نامعتبر است", status: 401 },
-        { status: 401 }
       );
     }
-
-    await prisma.otp.deleteMany({ where: { phone } });
 
     let user = await prisma.user.findUnique({ where: { phone } });
 
@@ -82,11 +79,10 @@ export async function POST(req: NextRequest) {
       path: "/",
     });
 
+    await prisma.otp.deleteMany({ where: { phone } });
+
     return response;
   } catch (error) {
-    return NextResponse.json(
-      { status: 500, message: "خطا در تأیید کد" },
-      { status: 500 }
-    );
+    return NextResponse.json({ status: 500, message: "خطا در تأیید کد" });
   }
 }

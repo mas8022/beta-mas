@@ -1,18 +1,73 @@
 "use client";
+
 import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
 import Fetch from "@/utils/fetchers/Fetch";
 import toast from "react-hot-toast";
 import { PropagateLoader } from "react-spinners";
 import { useRouter } from "next/navigation";
 
+// ✅ کامپوننت سفارشی OTPInput
+function CustomOTPInput({ length = 5, onChange, disabled }) {
+  const [otp, setOtp] = useState(Array(length).fill(""));
+  const inputsRef = useRef([]);
+
+  useEffect(() => {
+    inputsRef.current[0]?.focus();
+  }, []);
+
+  const handleChange = (e, index) => {
+    const value = e.target.value;
+    if (!/^\d?$/.test(value)) return;
+
+    const newOtp = [...otp];
+    newOtp[index] = value;
+    setOtp(newOtp);
+    onChange(newOtp.join(""));
+
+    if (value && index < length - 1) {
+      inputsRef.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (e, index) => {
+    if (e.key === "Backspace") {
+      if (otp[index] === "") {
+        if (index > 0) {
+          inputsRef.current[index - 1]?.focus();
+        }
+      } else {
+        const newOtp = [...otp];
+        newOtp[index] = "";
+        setOtp(newOtp);
+        onChange(newOtp.join(""));
+      }
+    }
+  };
+
+  return (
+    <div dir="ltr" className="flex justify-center gap-2">
+      {otp.map((value, index) => (
+        <input
+          key={index}
+          ref={(el) => (inputsRef.current[index] = el)}
+          type="text"
+          inputMode="numeric"
+          maxLength={1}
+          disabled={disabled}
+          value={value}
+          onChange={(e) => handleChange(e, index)}
+          onKeyDown={(e) => handleKeyDown(e, index)}
+          className="w-12 h-12 text-center text-xl font-bold border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 dark:bg-gray-800 dark:text-white dark:border-gray-600"
+        />
+      ))}
+    </div>
+  );
+}
+
+// ✅ فرم اصلی
 export default function LoginForm() {
   const router = useRouter();
   const [step, setStep] = useState("phone");
@@ -20,8 +75,6 @@ export default function LoginForm() {
   const [timeLeft, setTimeLeft] = useState(120);
   const [canResend, setCanResend] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const otpInputRef = useRef();
 
   const phoneRegex = /^09\d{9}$/;
   const otpRegex = /^\d{5}$/;
@@ -35,7 +88,6 @@ export default function LoginForm() {
 
   useEffect(() => {
     if (step !== "otp" || timeLeft <= 0) return;
-    otpInputRef.current.focus();
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
@@ -46,7 +98,6 @@ export default function LoginForm() {
         return prev - 1;
       });
     }, 1000);
-
     return () => clearInterval(interval);
   }, [step, timeLeft]);
 
@@ -109,6 +160,7 @@ export default function LoginForm() {
         window.location.href = "/";
       }
     } catch (error) {
+      console.log(error);
       toast.error("خطایی رخ داد، دوباره تلاش کنید.");
     } finally {
       setLoading(false);
@@ -176,21 +228,12 @@ export default function LoginForm() {
               کد تایید به {phone} ارسال شد
             </div>
 
-            <InputOTP
-              maxLength={5}
-              onChange={(value) => setValue("otp", value)}
+            {/* 🔁 استفاده از OTP سفارشی */}
+            <CustomOTPInput
+              length={5}
               disabled={loading}
-            >
-              <InputOTPGroup dir="ltr" className="justify-center">
-                {[...Array(5)].map((_, i) => (
-                  <InputOTPSlot
-                    key={i}
-                    index={i}
-                    ref={i === 0 ? otpInputRef : null}
-                  />
-                ))}
-              </InputOTPGroup>
-            </InputOTP>
+              onChange={(val) => setValue("otp", val)}
+            />
 
             <div className="flex justify-between gap-15 text-sm text-muted-foreground w-full items-center">
               <span>{formatTime(timeLeft)}</span>

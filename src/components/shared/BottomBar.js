@@ -24,18 +24,18 @@ export default function BottomBar() {
   const [open, setOpen] = useState(false);
 
   const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", {
-        method: "DELETE",
+    fetch("/api/auth/logout", {
+      method: "DELETE",
+    })
+      .then((res) => res.json())
+      .then(({ status, message }) => {
+        if (status > 201) {
+          toast.error(message);
+        } else {
+          setOpen(false);
+          router.replace("/auth");
+        }
       });
-
-      toast.success(message);
-
-      setOpen(false);
-      router.replace("/auth");
-    } catch (error) {
-      toast.error("خطا در خروج از حساب");
-    }
   };
 
   return (
