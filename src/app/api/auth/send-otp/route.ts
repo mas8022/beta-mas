@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import axios from "axios";
 import { prisma } from "@/lib/prisma";
+import rateLimiter from "@/utils/rateLimiter";
 
 export async function POST(req: NextRequest) {
   try {
+    const rateLimitResponse = await rateLimiter(req);
+    if (rateLimitResponse) return rateLimitResponse;
+
     const { phone } = await req.json();
 
     if (!phone) {
-      return NextResponse.json(
-        { status: 400, message: "شماره تلفن الزامی است" },
-        { status: 400 }
-      );
+      return NextResponse.json({
+        status: 400,
+        message: "شماره تلفن الزامی است",
+      });
     }
 
     const code = Math.floor(10000 + Math.random() * 90000).toString();
@@ -39,15 +43,13 @@ export async function POST(req: NextRequest) {
       data: {
         phone,
         code,
-        expiresAt
+        expiresAt,
       },
     });
 
     return NextResponse.json({ status: 200, message: "کد ارسال شد" });
   } catch (error) {
-    return NextResponse.json(
-      { status: 500, message: "خطا در ارسال کد" },
-      { status: 500 }
-    );
+    console.error("OTP send error:", error);
+    return NextResponse.json({ status: 500, message: "خطا در ارسال کد" });
   }
 }

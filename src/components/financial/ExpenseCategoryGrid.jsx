@@ -25,14 +25,13 @@ const expenseCategories = [
 export function ExpenseCategoryGrid({ selectedCategory, onCategorySelect }) {
   return (
     <div className="grid grid-cols-3 gap-3">
-      {expenseCategories.map((category) => {
+      {expenseCategories.map((category,i) => {
         const Icon = category.icon;
         const isSelected = selectedCategory === category.id;
 
         return (
-          <>
             <Button
-              key={category.id}
+              key={i}
               type={"button"}
               variant={isSelected ? "default" : "outline"}
               className={`h-20 flex flex-col gap-2 transition-all duration-200 ${
@@ -55,7 +54,6 @@ export function ExpenseCategoryGrid({ selectedCategory, onCategorySelect }) {
                 {category.name}
               </span>
             </Button>
-          </>
         );
       })}
     </div>
